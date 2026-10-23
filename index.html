@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WALKER // SEARCH</title>
+
+    <link rel="manifest" href="manifest.json">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #0b0c10;
+            color: #c5c6c7;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #data-stream-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.15; 
+            pointer-events: none !important; 
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(11, 12, 16, 0.8) 0%, rgba(11, 12, 16, 0.3) 50%, rgba(11, 12, 16, 0.8) 100%);
+            z-index: 2;
+            pointer-events: none !important; 
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 650px;
+            margin-top: 15vh;
+            padding: 20px;
+            z-index: 999; 
+            position: relative;
+        }
+
+        .search-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 45px;
+            font-weight: 900;
+            margin-bottom: 5px;
+            letter-spacing: 6px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6), 0 0 20px rgba(0, 242, 254, 0.3);
+            text-align: center;
+            user-select: none;
+        }
+
+        .subtitle {
+            font-size: 11px;
+            letter-spacing: 8px;
+            color: #66fcf1; 
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            font-weight: bold;
+            opacity: 0.8;
+            user-select: none;
+        }
+
+        .search-box {
+            display: flex;
+            width: 100%;
+            border: 1px solid #1f2833;
+            padding: 14px 24px;
+            background: rgba(11, 12, 16, 0.9);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .search-box::before {
+            content: '// ';
+            color: #66fcf1;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .search-box:hover, .search-box:focus-within {
+            border-color: #66fcf1;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.25);
+            background: rgba(31, 40, 51, 0.9);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background: transparent;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .search-box input::placeholder {
+            color: #45a29e;
+            opacity: 0.6;
+        }
+
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            background-color: rgba(11, 12, 16, 0.9);
+            backdrop-filter: blur(4px);
+            border: 1px solid #45a29e;
+            color: #66fcf1;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            padding: 12px 24px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            background-color: #66fcf1;
+            color: #0b0c10;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
+            border-color: #66fcf1;
+        }
+
+        .results-container {
+            width: 100%;
+            max-width: 750px;
+            margin-top: 40px;
+            padding: 0 20px 60px 20px;
+            z-index: 999;
+            position: relative;
+        }
+
+        .result-item {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(11, 12, 16, 0.9);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(31, 40, 51, 0.5);
+            border-left: 3px solid #45a29e;
+            transition: all 0.2s ease;
+        }
+
+        .result-item:hover {
+            border-left-color: #66fcf1;
+            border-color: rgba(102, 252, 241, 0.3);
+            background: rgba(26, 34, 43, 0.95);
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.1);
+            transform: translateX(2px);
+        }
+
+        .result-item.custom-site {
+            border-left: 3px solid #66fcf1;
+            background: rgba(0, 242, 254, 0.03);
+            border-color: rgba(102, 252, 241, 0.2);
+        }
+        .result-item.custom-site::after {
+            content: " [VERIFIED WALKER NETWORK]";
+            font-size: 9px;
+            color: #66fcf1;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        .result-item a {
+            text-decoration: none;
+        }
+
+        .result-item .display-link {
+            font-size: 12px;
+            color: #45a29e;
+            display: block;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-item h3 {
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .result-item h3:hover {
+            color: #66fcf1;
+        }
+
+        .result-item .snippet {
+            font-size: 13px;
+            color: #c5c6c7;
+            line-height: 1.6;
+        }
+    
+        @media (max-width: 600px) {
+            .logo { font-size: 32px; letter-spacing: 3px; }
+            .subtitle { letter-spacing: 4px; text-align: center; }
+            .search-box { padding: 12px 14px; }
+            .buttons { margin-top: 20px; }
+            .btn { padding: 11px 16px; letter-spacing: 1px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <div class="logo">◢ 𝚠𝚊𝚕𝚔𝚎𝚛 ◣</div>
+        <div class="subtitle">Search Protocol v1.5</div>
+
+        <!-- Removido o onsubmit antigo para evitar bugs do navegador -->
+        <div class="search-form">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="NÃO ESTOU SOZINHO... BUSCAR PROTOCOLO" autocomplete="off">
+            </div>
+
+            <div class="buttons">
+                <!-- Mudado para type="button" e adicionado o clique via onclick direto -->
+                <button type="button" class="btn" id="search-btn">Executar Busca</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container" id="results"></div>
+
+    <canvas id="data-stream-bg"></canvas>
+    <div class="bg-overlay"></div>
+
+    <script>
+"use strict";
+
+// ==========================================
+// BANCO DE DADOS LOCAL WALKER
+// ==========================================
+const MY_CUSTOM_SITES = [
+    {
+        title: "Banco Internacional Walker",
+        link: "https://o448786-creator.github.io/BANCO-INTERNACIONAL-WALKER/",
+        displayLink: "banco-walker.com",
+        snippet: "Sistema de internet banking desenvolvido sob o protocolo Walker.",
+        keywords: ["banco", "money", "saldo", "internacional", "carteira", "financeiro"]
+    },
+    {
+        title: "GTI-WAKER-WORD-BIOGRAFIAS",
+        link: "https://o448786-creator.github.io/GTI-WAKER-WORD-BIOGRAFIAS/",
+        displayLink: "walkers-biografias.com",
+        snippet: "Biografias dos Walkers.",
+        keywords: ["gti", "walker biografias", "waker word", "biografias"]
+    },
+    {
+        title: "WALKERTUBE",
+        link: "https://o448786-creator.github.io/Walkertube/",
+        displayLink: "walkertube.com",
+        snippet: "O WALKERTUBE é um site de vídeos.",
+        keywords: ["walkertube", "video", "vídeo", "videos", "vídeos"]
+    },
+    {
+        title: "Walker World",
+        link: "https://worldofwalker.com/",
+        displayLink: "worldofwalker.com",
+        snippet: "Site da comunidade World of Walker.",
+        keywords: ["walker world", "walkerword", "world of walker", "alan walker"]
+    },
+    {
+        title: "Walker Store",
+        link: "https://store.alanwalker.com/",
+        displayLink: "store.alanwalker.com",
+        snippet: "Loja oficial com roupas e acessórios relacionados a Alan Walker.",
+        keywords: ["walker store", "store", "roupas", "camiseta", "máscara", "mascara"]
+    },
+    {
+        title: "walkERFLIX",
+        link: "https://o448786-creator.github.io/WALKERFLIX/",
+        displayLink: "walkerflix.com",
+        snippet: "Projeto de streaming do universo Walker.",
+        keywords: ["walkerflix", "streaming", "filmes", "séries", "series"]
+    },
+    {
+        title: "Walker Patent Archive Multiverse",
+        link: "https://o448786-creator.github.io/WALKER-PATENT-ACHIVE-MULTIVERSE-ULTIMATE/",
+        displayLink: "walker-patent-archive.com",
+        snippet: "Projeto de arquivo de patentes e segredos do multiverso Walker.",
+        keywords: ["patent", "patente", "patentes", "segredos", "multiverso"]
+    }
+];
+
+// ==========================================
+// CONFIGURAÇÃO DA PESQUISA EXTERNA
+// ==========================================
+// A pesquisa local funciona sem chave.
+// Para pesquisa externa, configure API_KEY e SEARCH_ENGINE_ID.
+// Em um site público, proteja a chave em um backend.
+const API_KEY = "SUA_API_KEY_AQUI";
+const SEARCH_ENGINE_ID = "SEU_CX_ID_AQUI";
+
+const searchInput = document.getElementById("search-input");
+const resultsContainer = document.getElementById("results");
+const searchButton = document.getElementById("search-btn");
+
+function normalizeText(value) {
+    return String(value ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+function isValidHttpUrl(value) {
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch {
+        return false;
+    }
+}
+
+function showMessage(message) {
+    resultsContainer.replaceChildren();
+    const paragraph = document.createElement("p");
+    paragraph.style.color = "#66fcf1";
+    paragraph.textContent = message;
+    resultsContainer.appendChild(paragraph);
+}
+
+function searchLocal(query) {
+    const terms = normalizeText(query).split(/\s+/).filter(Boolean);
+
+    return MY_CUSTOM_SITES.filter(site => {
+        const searchable = normalizeText([
+            site.title,
+            site.displayLink,
+            site.snippet,
+            ...site.keywords
+        ].join(" "));
+
+        return terms.every(term => searchable.includes(term));
+    });
+}
+
+function createResult(item, isCustom = false) {
+    const card = document.createElement("div");
+    card.className = "result-item";
+
+    if (isCustom) card.classList.add("custom-site");
+
+    const link = document.createElement("a");
+    link.href = item.link;
+    link.rel = "noopener noreferrer";
+
+    const display = document.createElement("span");
+    display.className = "display-link";
+    display.textContent = item.displayLink || item.link;
+
+    const heading = document.createElement("h3");
+    heading.textContent = item.title || "Resultado sem título";
+
+    link.append(display, heading);
+
+    const snippet = document.createElement("div");
+    snippet.className = "snippet";
+    snippet.textContent = item.snippet || "Nenhuma descrição disponível.";
+
+    card.append(link, snippet);
+    return card;
+}
+
+function displayResults(customItems, externalItems = []) {
+    resultsContainer.replaceChildren();
+    const seenLinks = new Set();
+    let total = 0;
+
+    for (const item of customItems) {
+        if (!isValidHttpUrl(item.link)) continue;
+
+        const href = new URL(item.link).href;
+        if (seenLinks.has(href)) continue;
+        seenLinks.add(href);
+
+        resultsContainer.appendChild(createResult(item, true));
+        total++;
+    }
+
+    for (const item of externalItems) {
+        if (!item.link || !isValidHttpUrl(item.link)) continue;
+
+        const href = new URL(item.link).href;
+        if (seenLinks.has(href)) continue;
+        seenLinks.add(href);
+
+        resultsContainer.appendChild(createResult({
+            title: item.title,
+            link: href,
+            displayLink: item.displayLink,
+            snippet: item.snippet
+        }));
+        total++;
+    }
+
+    if (total === 0) {
+        showMessage("// Nenhum protocolo correspondente encontrado.");
+    }
+}
+
+function addGoogleFallback(query, messageText) {
+    const message = document.createElement("p");
+    message.style.cssText =
+        "color:#45a29e;margin-top:20px;font-size:12px;";
+    message.appendChild(document.createTextNode(messageText + " "));
+
+    const link = document.createElement("a");
+    link.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.style.color = "#66fcf1";
+    link.style.textDecoration = "underline";
+    link.textContent = "Pesquisar no Google";
+
+    message.appendChild(link);
+    resultsContainer.appendChild(message);
+}
+
+async function searchGoogle(query) {
+    const endpoint = new URL("https://www.googleapis.com/customsearch/v1");
+    endpoint.searchParams.set("key", API_KEY);
+    endpoint.searchParams.set("cx", SEARCH_ENGINE_ID);
+    endpoint.searchParams.set("q", query);
+
+    const response = await fetch(endpoint.toString());
+
+    if (!response.ok) {
+        throw new Error("Google Search API respondeu com HTTP " + response.status);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data.items) ? data.items : [];
+}
+
+let currentSearchId = 0;
+
+async function performSearch() {
+    const query = searchInput.value.trim();
+
+    if (!query) {
+        showMessage("// Digite algo para pesquisar na rede Walker.");
+        searchInput.focus();
+        return;
+    }
+
+    const searchId = ++currentSearchId;
+    const localResults = searchLocal(query);
+
+    showMessage("// Inicializando varredura na rede...");
+
+    const apiConfigured =
+        API_KEY !== "SUA_API_KEY_AQUI" &&
+        SEARCH_ENGINE_ID !== "SEU_CX_ID_AQUI" &&
+        Boolean(API_KEY.trim()) &&
+        Boolean(SEARCH_ENGINE_ID.trim());
+
+    if (!apiConfigured) {
+        displayResults(localResults, []);
+        if (localResults.length === 0) {
+            addGoogleFallback(
+                query,
+                "[AVISO] Nenhum site Walker correspondeu à busca."
+            );
+        }
+        return;
+    }
+
+    searchButton.disabled = true;
+    searchButton.textContent = "Pesquisando...";
+
+    try {
+        const externalResults = await searchGoogle(query);
+        if (searchId !== currentSearchId) return;
+        displayResults(localResults, externalResults);
+    } catch (error) {
+        console.error("Erro na pesquisa externa:", error);
+        if (searchId !== currentSearchId) return;
+
+        displayResults(localResults, []);
+        addGoogleFallback(
+            query,
+            "[AVISO] A pesquisa externa falhou. Verifique a configuração da API."
+        );
+    } finally {
+        if (searchId === currentSearchId) {
+            searchButton.disabled = false;
+            searchButton.textContent = "Executar Busca";
+        }
+    }
+}
+
+// Botão e tecla Enter
+searchButton.addEventListener("click", performSearch);
+
+searchInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        performSearch();
+    }
+});
+
+// ==========================================
+// FUNDO ANIMADO WALKER
+// ==========================================
+const canvas = document.getElementById("data-stream-bg");
+const ctx = canvas.getContext("2d");
+const chars = Array.from("0123456789◢◣//XAW___*#@+=-");
+const fontSize = 14;
+let drops = [];
+
+function resizeCanvas() {
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+
+    canvas.width = Math.floor(window.innerWidth * ratio);
+    canvas.height = Math.floor(window.innerHeight * ratio);
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
+
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    const columns = Math.ceil(window.innerWidth / fontSize);
+    drops = Array.from(
+        { length: columns },
+        (_, index) => drops[index] || 1
+    );
+}
+
+function drawDataStream() {
+    ctx.fillStyle = "rgba(11, 12, 16, 0.08)";
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+
+    ctx.fillStyle = "#00f2fe";
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const character = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(character, i * fontSize, drops[i] * fontSize);
+
+        if (
+            drops[i] * fontSize > window.innerHeight &&
+            Math.random() > 0.975
+        ) {
+            drops[i] = 0;
+        }
+
+        drops[i]++;
+    }
+}
+
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+setInterval(drawDataStream, 33);
+
+// ==========================================
+// SERVICE WORKER / PWA
+// ==========================================
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+            .then(registration => {
+                console.log("Protocolo PWA ativo:", registration.scope);
+            })
+            .catch(error => {
+                console.error("Falha ao registrar o Service Worker:", error);
+            });
+    });
+}
+</script>
+
+
+
+</body>
+</html>
+corrija o meu código
