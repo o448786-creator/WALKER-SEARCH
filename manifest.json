@@ -1,0 +1,21 @@
+{
+  "name": "Walker Search Protocol",
+  "short_name": "WalkerSearch",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b0c10",
+  "theme_color": "#0b0c10",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://icons8.com",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://icons8.com",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
